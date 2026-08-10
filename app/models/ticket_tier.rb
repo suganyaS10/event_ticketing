@@ -6,4 +6,17 @@ class TicketTier < ApplicationRecord
   belongs_to :event
 
   has_many :order_items
+
+  def quantity_available
+    quantity_total - quantity_sold
+  end
+
+  def available?
+    quantity_available > 0
+  end
+
+  def sale_window_live?(at = Time.current)
+    (sale_starts_at.nil? || sale_starts_at <= at) &&
+      (sale_ends_at.nil? || sale_ends_at > at)
+  end
 end
