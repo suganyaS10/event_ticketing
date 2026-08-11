@@ -1,9 +1,13 @@
 name: CI
 
+# Disabled: manual trigger only, so nothing runs on push or pull request.
+#
+# The generated workflow runs Minitest (`bin/rails test`), but this project uses RSpec,
+# so it would report green without executing any of the specs. Pointing the test job at
+# `bundle exec rspec` and dropping the system-test job would make it meaningful — left
+# out of scope rather than left reporting a false pass.
 on:
-  pull_request:
-  push:
-    branches: [ main ]
+  workflow_dispatch:
 
 jobs:
   scan_ruby:
