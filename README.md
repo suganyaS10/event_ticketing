@@ -21,12 +21,11 @@ Configuration is by environment variable, loaded from `.env.*` files via `dotenv
 `.env.example` shows what is needed:
 
 ```
-DATABASE_URL="postgres://${USER}@localhost/my_database"
+DATABASE_URL="postgres://username:password@localhost:5432"
 ```
 
-`config/database.yml` uses `DATABASE_URL` when present and otherwise falls back to
-`ticketing_development` / `ticketing_test` on the local socket, so on a standard local
-PostgreSQL install no configuration is needed at all.
+If your PostgreSQL uses trust authentication on the local socket, DATABASE_URL can be omitted entirely - config/database.yml falls back to ticketing_development / ticketing_test on localhost. If it requires a username and password, set the variable above, percent-encoding any special characters in the password.
+
 
 ## Database creation
 
@@ -70,9 +69,6 @@ bin/rails server
 
 ```bash
 bundle exec rspec        # 110 examples
-bin/rubocop              # style
-bin/brakeman             # security analysis
-bin/ci                   # all of the above, plus a seed run
 ```
 
 ## API
@@ -153,6 +149,8 @@ CHECK (quantity_sold >= 0 AND quantity_sold <= quantity_total)
 
 ### Trade-offs accepted
 
+- validate the incoming requests outside the lock and again validate the requested data_item
+against the locked tier
 - Two people buying the same tier queue behind each other. 
 - Locks are held for the whole purchase, including writing the order and its lines. Keeping the transaction short matters; nothing slow (HTTP calls, mail) belongs inside it.
 - **All-or-nothing baskets.** If one line cannot be filled, the whole order is rejected. 
