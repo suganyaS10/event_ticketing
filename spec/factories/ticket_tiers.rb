@@ -8,6 +8,7 @@ FactoryBot.define do
     currency { "GBP" }
     quantity_total { 100 }
     quantity_sold { 0 }
+    perks { "Water bottle, a brownie" }
 
     trait :vip do
       name { "VIP" }

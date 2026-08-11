@@ -1,6 +1,6 @@
 class CreateOrders < ActiveRecord::Migration[8.1]
   def change
-    create_enum :order_status, [ 'initialised', 'checked_out', 'paid', 'cancelled' ]
+    create_enum :order_status, [ 'initialised', 'succeeded', 'failed', 'cancelled' ]
 
     create_table :orders do |t|
       t.references :event, foreign_key: true, index: true, null: false

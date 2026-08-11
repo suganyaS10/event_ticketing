@@ -20,7 +20,7 @@ RSpec.describe Order, type: :model do
     end
 
     it 'accepts every declared state' do
-      %w[initialised checked_out paid cancelled].each do |state|
+      %w[initialised succeeded failed cancelled].each do |state|
         expect(build(:order, status: state)).to be_valid
       end
     end

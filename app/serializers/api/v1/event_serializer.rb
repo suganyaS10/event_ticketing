@@ -8,7 +8,7 @@ module Api
 
       view :summary do
         field :tickets_available do |event, _options|
-          event.tickets_purchaseable?  ? "Available" : "Sold out"
+          event.tickets_purchaseable?
         end
 
         field :price_starts_from do |event, _options|

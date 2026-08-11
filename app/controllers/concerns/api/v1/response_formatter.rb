@@ -7,6 +7,7 @@ module Api
 
       included do
         rescue_from ActiveRecord::RecordNotFound, with: :render_not_found
+        rescue_from ActiveRecord::RecordNotUnique, with: :render_record_not_unique
       end
 
       def json_response(data: nil, message: nil, status: :ok, meta_data: {})
@@ -29,6 +30,14 @@ module Api
         render_error(status: :not_found,
                      code: "not_found",
                      message: "The requested resource does not exist.")
+      end
+
+      def render_record_not_unique(_error)
+        render_error(
+          status: :record_not_unique,
+          code: "record_not_unique",
+          message: "Record already exists"
+        )
       end
 
 

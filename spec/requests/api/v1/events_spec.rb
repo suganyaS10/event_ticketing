@@ -108,7 +108,7 @@ RSpec.describe "Api::V1::Events", type: :request do
 
         get "/api/v1/events"
 
-        expect(data.first["tickets_available"]).to eq("Available")
+        expect(data.first["tickets_available"]).to be(true)
       end
 
       it "reports sold out, with no price, once every tier is exhausted" do
@@ -116,7 +116,7 @@ RSpec.describe "Api::V1::Events", type: :request do
 
         get "/api/v1/events"
 
-        expect(data.first["tickets_available"]).to eq("Sold out")
+        expect(data.first["tickets_available"]).to be(false)
         expect(data.first["price_starts_from"]).to be_nil
       end
     end
