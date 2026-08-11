@@ -146,6 +146,16 @@ Three decisions were important
 ```sql
 CHECK (quantity_sold >= 0 AND quantity_sold <= quantity_total)
 ```
+### What breaks if you remove each piece
+
+| Removed | Consequence |
+|---|---|
+| the row lock | Two buyers read the same `quantity_sold` and both write it back. Last write wins, one ticket sold twice. The check constraint catches the overshoot, so the *d
+ata* stays correct — but the loser gets a 500 instead of a clean 409. |
+| `ORDER BY id` | Single-tier purchases are unaffected. Mixed basketsresults in deadlock.  `deadlock_timeout`. |
+| the check constraint | Nothing changes while the lock is correct. Any purchase outside the service - example purchase made from console / any other background job in future without lock mechanism will blow up  |
+| checking inside the lock | Validating the price and stock outside the lock will result in comparing with the stale tier data |
+
 
 ### Trade-offs accepted
 
