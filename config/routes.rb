@@ -14,7 +14,11 @@ Rails.application.routes.draw do
 
   namespace :api do
     namespace :v1 do
-      resources :events, only: [ :index, :show ]
+      resources :events, only: [ :index, :show ] do
+        resources :orders, only: [:create]
+      end
+
+      resources :orders, only: [ :index, :show ], param: :order_ref
     end
   end
 end
