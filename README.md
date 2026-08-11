@@ -6,7 +6,7 @@ A JSON API for browsing events and buying tickets.
 
 ## Ruby version
 
-- **Ruby 3.4.9** — pinned in `.ruby-version` and `.tool-versions`
+- **Ruby 3.4.9** - pinned in `.ruby-version` and `.tool-versions`
 - **Rails 8.1.3**
 
 ## System dependencies
@@ -46,18 +46,18 @@ bin/rails db:prepare
 bin/rails db:seed
 ```
 
-The seeds are idempotent — re-running restores the declared state, including `quantity_sold`, so you can reset after experimenting.
+The seeds are idempotent - re-running restores the declared state, including `quantity_sold`, so you can reset after experimenting.
 
 Five events, each named after the scenario it exercises, so every interesting path is reachable
 without any setup:
 
 | Event | Tiers | Exercises |
 |---|---|---|
-| 1 · Riverside Night Market | GA £25 (60 left) · VIP £75 (15) · Child £10 (50) | happy path, mixed basket |
-| 2 · Harbour Jazz Session | GA £18 (**1 left**) · Balcony £30 (**sold out**) | the last-ticket race, sold-out rejection |
-| 3 · Winter Light Festival | Early Bird £15 (**window closed**) · Standard £22 | sale windows enforced by dates, not by name |
-| 4 · Summer Sessions | GA £20 | **draft** — must not appear in the listing |
-| 5 · Spring Warehouse Party | GA £20 | **past** — must not appear in the listing |
+| 1 . Riverside Night Market | GA £25 (60 left) . VIP £75 (15) . Child £10 (50) | happy path, mixed basket |
+| 2 . Harbour Jazz Session | GA £18 (**1 left**) . Balcony £30 (**sold out**) | the last-ticket race, sold-out rejection |
+| 3 . Winter Light Festival | Early Bird £15 (**window closed**) . Standard £22 | sale windows enforced by dates, not by name |
+| 4 . Summer Sessions | GA £20 | **draft** - must not appear in the listing |
+| 5 . Spring Warehouse Party | GA £20 | **past** - must not appear in the listing |
 
 Then:
 
@@ -68,7 +68,7 @@ bin/rails server
 ## How to run the test suite
 
 ```bash
-bundle exec rspec        # 110 examples
+bundle exec rspec        # 135 examples
 ```
 
 ## API
@@ -91,8 +91,8 @@ curl -i -X POST http://localhost:3000/api/v1/events/2/orders \
   }'
 ```
 
-`201 Created` with the order and its lines. Run it again — event 2's General Admission is now
-exhausted — and you get:
+`201 Created` with the order and its lines. Run it again - event 2's General Admission is now
+exhausted - and you get:
 
 ```json
 {
@@ -137,11 +137,11 @@ end
 
 Three decisions were important
 
-**The checks happen inside the lock.** quantity availability read *before* the lock is stale and hence it can enable mtwo users buy the last remaining "1" ticket. 
+**The checks happen inside the lock.** quantity availability read *before* the lock is stale and hence it can enables two users buy the last remaining "1" ticket. 
 
 **`ORDER BY id` comes before `.lock`.** This is to avoid deadlock 
 
-**A database level check constraint** - This is to ensure even if the selling happens outside the scope of thi service, the DB constraint would make sure we are never over-selling
+**A database level check constraint** - This is to ensure even if the selling happens outside the scope of this service, the DB constraint would make sure we are never over-selling
 
 ```sql
 CHECK (quantity_sold >= 0 AND quantity_sold <= quantity_total)
@@ -175,9 +175,9 @@ thread 1: rejected -> Not enough tickets remain for the quantity requested
 AFTER:  sold=60/60  available=0
 ```
 
-Exactly one sale; the loser gets a 422. This is a real test in
+Exactly one sale; the loser gets a 409. This is a real test in
 `spec/services/orders/tickets_service_spec.rb`, not a description. (It has to disable
-transactional fixtures — two transactions cannot see each other's uncommitted rows, so the race would not otherwise reproduce.)
+transactional fixtures - two transactions cannot see each other's uncommitted rows, so the race would not otherwise reproduce.)
 
 ## A price change during a purchase
 
@@ -194,8 +194,7 @@ Inside the lock, that is compared against the tier's real price. If they differ 
 
 ### The lock protects the price too
 
-It happens either before it (and the guard rejects the
-stale quote) or after it (and the snapshot is already written).
+The price update happens either before it (and the guard rejects the stale quote) or after it (and the snapshot is already written).
 
 ### Trade-offs accepted
 
@@ -221,7 +220,7 @@ also what payment processors expect, so adding payments introduces no conversion
 exactly the point where rounding matters.
 
 **Buyers are `customers`, not `guests`.** When authentication arrives, credentials attach to the
-existing customer row — rather than a separate `users` table with a polymorphic buyer, which
+existing customer row - rather than a separate `users` table with a polymorphic buyer, which
 would drop the foreign key on `orders` and split one person's history in two.
 
 **Orders are addressed by an opaque `order_ref`**, not by id. Without authentication that
@@ -230,7 +229,7 @@ catalogue is public and obscuring those identifiers would protect nothing. Draft
 404 **identical** to a missing record, so the response never confirms an unannounced event exists.
 
 **Failed purchases are recorded** with `status: failed` and a `failure_reason`, written *after*
-the transaction rolls back — written inside it, the rollback would erase the record along with
+the transaction rolls back - written inside it, the rollback would erase the record along with
 everything else. Requests rejected before an order exists leave no row: fulfilment failures are
 recorded, malformed requests are not.
 
@@ -246,17 +245,17 @@ Called out so the gaps read as decisions rather than oversights.
 
 **Idempotency.** A retried `POST` currently creates a second order. The fix is a client-supplied
 `Idempotency-Key` header with a unique index, returning the original order on replay. Note that
-`order_ref` cannot do this job — it is server-generated, so a retry mints a different one.
+`order_ref` cannot do this job - it is server-generated, so a retry mints a different one.
 
 **Reservations.** Real ticketing holds stock for a few minutes during payment. That needs an
-`expires_at` column and a sweeper job — and with no payment step, there is nothing to hold *for*.
+`expires_at` column and a sweeper job - and with no payment step, there is nothing to hold *for*.
 
 **Authentication.** Excluded by the brief. `GET /api/v1/orders` (list by email) exists but would
 need real authentication before shipping: an email address is not a credential.
 
 **A JSON 500 handler.** Unhandled exceptions currently fall through to Rails' default handling.
 A production API would rescue `StandardError` at the base controller, log the detail and return a
-generic body — left out here to keep failures visible during development.
+generic body - left out here to keep failures visible during development.
 
 **Structured error details.** Errors carry a `code` and a message, but the offending tier ids are
 interpolated into the message rather than returned as structured data. A client currently has to
@@ -271,7 +270,7 @@ queues rather than hangs.
 
 # Test coverage
 
-**110 examples**, no failures. There is no coverage tool wired up — adding SimpleCov would be the
+**135 examples**, no failures. There is no coverage tool wired up - adding SimpleCov would be the
 next step, along with request specs for the orders endpoints, which are currently covered only at
 the service layer.
 
@@ -279,15 +278,15 @@ What is covered:
 
 | Area | Notes |
 |---|---|
-| `spec/services/orders/tickets_service_spec.rb` | The purchase flow: happy path, multi-tier basket, price snapshotting, every rejection, inventory rollback — plus the **concurrent last-ticket race** and the **mid-request price change** |
+| `spec/services/orders/tickets_service_spec.rb` | The purchase flow: happy path, multi-tier basket, price snapshotting, every rejection, inventory rollback - plus the **concurrent last-ticket race** and the **mid-request price change** |
 | `spec/models/ticket_tier_spec.rb` | Inventory rules, sale-window boundaries, and the **check constraint tested directly with validations bypassed**, proving the database refuses to oversell on its own |
 | `spec/models/*` | Validations, associations, price and availability logic |
 | `spec/requests/api/v1/events_spec.rb` | Listing filters (draft, past), payload shape, 404 behaviour |
 
 Deliberate gaps: no request specs for the orders endpoints (the service beneath them is
-thoroughly covered), and no test for a price change *inside* the transaction — that cannot happen,
+thoroughly covered), and no test for a price change *inside* the transaction - that cannot happen,
 since the lock blocks it, and asserting it would mean testing PostgreSQL via timing.
 
 ---
 
-Roughly: schema and models · seeds · events API · purchase service and its tests · README.
+Roughly: schema and models . seeds . events API . purchase service and its tests . README.
