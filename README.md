@@ -255,6 +255,8 @@ generic body — left out here to keep failures visible during development.
 interpolated into the message rather than returned as structured data. A client currently has to
 parse prose to know which line to fix.
 
+**API documentation.** The endpoints are described in this README, but it is not the standard way of doing it. As a next step, I would add a API documentation. 
+
 **Pagination** on the events listing, and **`lock_timeout`** in production so a stuck transaction
 queues rather than hangs.
 
