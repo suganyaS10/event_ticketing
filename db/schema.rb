@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_08_10_113827) do
+ActiveRecord::Schema[8.1].define(version: 2026_08_08_110706) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "pg_catalog.plpgsql"
 
@@ -58,15 +58,13 @@ ActiveRecord::Schema[8.1].define(version: 2026_08_10_113827) do
     t.datetime "created_at", null: false
     t.bigint "customer_id", null: false
     t.bigint "event_id", null: false
-    t.string "failure_reason"
-    t.string "idempotency_key"
+    t.text "failure_reason"
     t.string "order_ref", null: false
     t.enum "status", default: "initialised", null: false, enum_type: "order_status"
     t.integer "total_cents", default: 0, null: false
     t.datetime "updated_at", null: false
     t.index ["customer_id"], name: "index_orders_on_customer_id"
     t.index ["event_id"], name: "index_orders_on_event_id"
-    t.index ["idempotency_key"], name: "index_orders_on_idempotency_key", unique: true, where: "(idempotency_key IS NOT NULL)"
     t.index ["order_ref"], name: "index_orders_on_order_ref", unique: true
   end
 

@@ -8,6 +8,7 @@ class CreateOrders < ActiveRecord::Migration[8.1]
       t.string :order_ref, null: false
       t.integer :total_cents, null: false, default: 0
       t.enum :status, enum_type: :order_status, default: 'initialised', null: false
+      t.text :failure_reason
 
       t.index :order_ref, unique: true
 

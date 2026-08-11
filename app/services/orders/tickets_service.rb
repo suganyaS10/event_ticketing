@@ -70,7 +70,7 @@ module Orders
         update_order_total!(order)
         update_order_status!(order)
       end
-    rescue Errors::TierDataMismatch, ActiveRecord::RecordInvalid => e
+    rescue Errors::PriceMismatch, Errors::StockMismatch, ActiveRecord::RecordInvalid => e
       order.update_columns(
         status: Order.statuses["failed"],
         failure_reason: e.message,

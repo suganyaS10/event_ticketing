@@ -3,11 +3,11 @@ module Api
     class OrdersController < BaseController
       rescue_from Orders::Errors::UnknownTier, with: :handle_invalid_tier
       rescue_from Orders::Errors::InvalidTier, with: :handle_invalid_tier
-      rescue_from Orders::Errors::PriceMismatch, with: :handle_tier_data_mismatch
-      rescue_from Orders::Errors::StockMismatch, with: :handle_tier_data_mismatch
+      rescue_from Orders::Errors::PriceMismatch, with: :handle_data_conflict
+      rescue_from Orders::Errors::StockMismatch, with: :handle_data_conflict
 
       def index
-        customer = Customer.find_by(email: customer_params[:email])
+        customer = Customer.find_by!(email: customer_params[:email])
         customer_orders = customer.orders.order(updated_at: :desc)
 
         json_response(
@@ -16,7 +16,7 @@ module Api
       end
 
       def show
-        order = Order.find_by(order_ref: params[:order_ref])
+        order = Order.find_by!(order_ref: params[:order_ref])
 
         json_response(
           data: Api::V1::OrderSerializer.render_as_hash(order)
@@ -26,6 +26,7 @@ module Api
       def create
         event = Event.published.find(params[:event_id])
         customer_params, order_item_params = order_params
+        order_item_params = sanitize_request!(order_item_params)
         purchased_order = Orders::TicketsService.call(
             event:,
             customer_params:,
@@ -33,7 +34,8 @@ module Api
           )
 
         json_response(
-          data: Api::V1::OrderSerializer.render_as_hash(purchased_order)
+          data: Api::V1::OrderSerializer.render_as_hash(purchased_order),
+          status: :created
         )
       end
 
@@ -50,26 +52,33 @@ module Api
         )
       end
 
-      # to make sure all the values in the items [{}] is an integer
-      def sanitize_order_params
-        order_params[:items].map do |item|
-          item.each { |k, v| item[k] = v.to_i }
+      def sanitize_request!(order_item_params)
+        order_item_params.map do |item|
+          {
+            ticket_tier_id: Integer(item[:ticket_tier_id].to_s),
+            quantity: Integer(item[:quantity].to_s),
+            expected_unit_price_cents: Integer(item[:expected_unit_price_cents].to_s)
+          }.tap do |line|
+            raise Orders::Errors::InvalidTier, "Quantity must be a positive whole number" unless line[:quantity].positive?
+          end
         end
-
-        order_params
+      rescue TypeError, ArgumentError
+        raise Orders::Errors::InvalidTier, "Ticket tier, quantity and price must be whole numbers"
       end
 
       def handle_invalid_tier(exception)
-        json_error_response(
+        render_error(
           status: :unprocessable_content,
-          errors: exception.message
+          code: "invalid_request",
+          message: exception.message
         )
       end
 
-      def handle_tier_data_mismatch(exception)
-        json_error_response(
+      def handle_data_conflict(exception)
+        render_error(
           status: :conflict,
-          errors: exception.message
+          code: "purchase_conflict",
+          message: exception.message
         )
       end
     end
