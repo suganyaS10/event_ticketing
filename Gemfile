@@ -25,7 +25,7 @@ gem "kamal", require: false
 gem "thruster", require: false
 gem "image_processing", "~> 1.2"
 
-gem "blueprinter", "~> 1.2.1"
+gem "blueprinter", "~> 1.3.0"
 
 
 group :development, :test do
